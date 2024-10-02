@@ -7,7 +7,7 @@ describe("Airdrop Contract", function () {
   let merkleRootHash;
 
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3,addr4, addr5, addr6,addr7, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, ...addrs] = await ethers.getSigners();
 
     // Deploy MyToken
     Token = await ethers.getContractFactory("MyToken");
