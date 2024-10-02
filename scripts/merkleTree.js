@@ -13,7 +13,7 @@ exports.merkleRoot = (items) => {
 };
 
 exports.merkleProof = (items, item) => {
-  let index = items.findIndex((i) => i === item);
+  let index = items.findIndex((i) => i.address === item.address && i.amount === item.amount);
   if (index === -1) throw new Error('Item not found in items: ' + item);
 
   let path = [];
@@ -43,6 +43,7 @@ exports.merkleProof = (items, item) => {
     witnesses,
   };
 };
+
 
 exports.merkleVerification = (root, address, path, witnesses) => {
   let node = leafHash(address);
@@ -74,9 +75,13 @@ function hashLevel(level) {
 
 function leafHash(leaf) {
   const prefix = ethers.hexlify(ethers.toUtf8Bytes("\x00"));
-  const addressBytes = ethers.hexlify(leaf);
-  return ethers.keccak256(ethers.concat([prefix, addressBytes]));
   
+  // Empaquetar dirección y cantidad
+  const addressBytes = ethers.hexlify(leaf.address); // Dirección en formato bytes
+  const amountBytes = ethers.solidityPacked(['uint256'], [leaf.amount]); // Cantidad en formato uint256
+  
+  // Concatenar dirección y cantidad, y luego aplicar el keccak256
+  return ethers.keccak256(ethers.concat([prefix, addressBytes, amountBytes]));
 }
 
 function nodeHash(left, right) {
