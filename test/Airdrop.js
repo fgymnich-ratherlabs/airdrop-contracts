@@ -7,7 +7,7 @@ describe("Airdrop Contract", function () {
   let merkleRootHash;
 
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3,addr4, addr5, addr6,addr7, ...addrs] = await ethers.getSigners();
 
     // Deploy MyToken
     Token = await ethers.getContractFactory("MyToken");
@@ -20,6 +20,10 @@ describe("Airdrop Contract", function () {
       { address: addr1.address, amount: ethers.parseEther("1000") },
       { address: addr2.address, amount: ethers.parseEther("500") },
       { address: addr3.address, amount: ethers.parseEther("1500") },
+      { address: addr4.address, amount: ethers.parseEther("1500") },
+      { address: addr5.address, amount: ethers.parseEther("1500") },
+      { address: addr6.address, amount: ethers.parseEther("1500") },
+      { address: addr7.address, amount: ethers.parseEther("1500") },
     ];
     
     // Generate the Merkle Root from the list of addresses and amounts
@@ -45,7 +49,6 @@ describe("Airdrop Contract", function () {
 
     // Generate Merkle Proof for addr1
     const { witnesses, path } = merkleProof(addresses, { address: addr1.address, amount: totalAmount });
-
 
     // addr1 calls the airdrop function with a partial redemption
     await expect(airdrop.connect(addr1).airdrop(witnesses, totalAmount, redeemAmount, path))

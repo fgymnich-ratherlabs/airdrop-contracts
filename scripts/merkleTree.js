@@ -45,8 +45,8 @@ exports.merkleProof = (items, item) => {
 };
 
 
-exports.merkleVerification = (root, address, path, witnesses) => {
-  let node = leafHash(address);
+exports.merkleVerification = (root, item, path, witnesses) => {
+  let node = leafHash(item);
   
   for (let i = 0; i < witnesses.length; i++) {
     if ((path & 1) === 1) { // Compare with number 1
