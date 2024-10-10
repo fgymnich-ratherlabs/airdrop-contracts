@@ -12,5 +12,23 @@ module.exports = {
       },
       chainId: 31337,
     },
+    bsc_testnet: {
+      url: process.env.INFURA_BSC_TESTNET_APIKEY,
+      accounts: { 
+        mnemonic: process.env.SEED_PHRASE, 
+      },
+    },
+    amoy: {
+      url: process.env.INFURA_AMOY_APIKEY,
+      accounts: { 
+        mnemonic: process.env.SEED_PHRASE, 
+      },
+    },
+    holesky: {
+      url: process.env.INFURA_HOLESKY_APIKEY,
+      accounts: { 
+        mnemonic: process.env.SEED_PHRASE, 
+      },
+    },
   },
 };
