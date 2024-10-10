@@ -8,19 +8,19 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 contract Airdrop is Ownable, Pausable {
 
     bytes32 public merkleRoot;
-    MyToken private token;
-    mapping(address => uint256) private redeemed; // Cantidad ya redimida por cada usuario
-    mapping(address => uint256) private totalAssigned; // Cantidad total asignada a cada usuario
+    MyToken public token;
+    mapping(address => uint256) public redeemed; // Cantidad ya redimida por cada usuario
+    mapping(address => uint256) public totalAssigned; // Cantidad total asignada a cada usuario
 
     constructor(bytes32 _merkleRoot, address _tokenAddress) Ownable(msg.sender) {
         merkleRoot = _merkleRoot;
         token = MyToken(_tokenAddress);
     }
 
-    event TokensAirdropped(address indexed account, uint256 amount);
+    event TokensAirdropped(address indexed account, uint256 amount); //Redeemed
 
     // Actualiza el Merkle root
-    function updateMerkleRoot(bytes32 _airDropWhiteListMerkleRoot) external onlyOwner {
+    function updateMerkleRoot(bytes32 _airDropWhiteListMerkleRoot) external onlyOwner { //airdrop external o public??
         merkleRoot = _airDropWhiteListMerkleRoot;
     }
 
