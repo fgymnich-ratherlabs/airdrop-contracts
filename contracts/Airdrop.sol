@@ -30,16 +30,8 @@ contract Airdrop is Ownable, Pausable {
         // Validar que el contrato tiene suficientes tokens para la transacción
         require(token.balanceOf(address(this)) >= _amount, "AirDrop: MyToken contract does not have enough tokens.");
 
-        // Resolver el nodo del Merkle Tree para validar la dirección y la cantidad total asignada
-        bytes32 node = keccak256(abi.encodePacked(uint8(0x00), msg.sender, _totalAmount));
-        for (uint16 i = 0; i < _witnesses.length; i++) {
-            if (node < _witnesses[i]) {
-                node = keccak256(abi.encodePacked(uint8(0x01), node, _witnesses[i]));
-            } else {
-                node = keccak256(abi.encodePacked(uint8(0x01), _witnesses[i], node));
-            }
-        }
-        require(node == merkleRoot, "AirDrop: address and amount not in the whitelist or wrong proof provided.");
+        bytes32 calculatedMerkleProof = merkleVerification(_totalAmount, _witnesses);
+        require(calculatedMerkleProof == merkleRoot, "AirDrop: address and amount not in the whitelist or wrong proof provided.");
         
         // Si no se ha registrado la cantidad total asignada, la asignamos la primera vez
         if (totalAssigned[msg.sender] == 0) {
@@ -55,6 +47,20 @@ contract Airdrop is Ownable, Pausable {
         // Transferir los tokens al usuario
         token.transfer(msg.sender, _amount);
         emit TokensAirdropped(msg.sender, _amount);
+    }
+
+    function merkleVerification(uint256 _totalAmount, bytes32[] memory _witnesses ) private view returns (bytes32) {
+        // Resolver el nodo del Merkle Tree para validar la dirección y la cantidad total asignada
+        bytes32 node = keccak256(abi.encodePacked(uint8(0x00), msg.sender, _totalAmount));
+        for (uint16 i = 0; i < _witnesses.length; i++) {
+            if (node < _witnesses[i]) {
+                node = keccak256(abi.encodePacked(uint8(0x01), node, _witnesses[i]));
+            } else {
+                node = keccak256(abi.encodePacked(uint8(0x01), _witnesses[i], node));
+            }
+        }
+
+        return node;
     }
 
     // Pausar y reanudar el contrato
