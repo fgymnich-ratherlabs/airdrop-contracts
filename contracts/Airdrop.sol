@@ -25,11 +25,13 @@ contract Airdrop is Ownable, Pausable {
     }
 
     // Permite redimir tokens en múltiples transacciones
-    function airdrop(bytes32[] memory _witnesses, uint256 _totalAmount, uint256 _amount, uint256 _path) public whenNotPaused {
+    function airdrop(bytes32[] calldata _merkleProof, bytes32[] memory _witnesses, uint256 _totalAmount, uint256 _amount, uint256 _path) public whenNotPaused {
         // Validar que el contrato tiene suficientes tokens para la transacción
         require(token.balanceOf(address(this)) >= _amount, "AirDrop: MyToken contract does not have enough tokens.");
 
-        // Resolver el nodo del Merkle Tree para validar la dirección y la cantidad total asignada
+
+
+       /*  // Resolver el nodo del Merkle Tree para validar la dirección y la cantidad total asignada
         bytes32 node = keccak256(abi.encodePacked(uint8(0x00), msg.sender, _totalAmount));
         for (uint16 i = 0; i < _witnesses.length; i++) {
             if ((_path & 0x01) == 1) {
@@ -39,8 +41,13 @@ contract Airdrop is Ownable, Pausable {
             }
             _path /= 2;
         }
-        require(node == merkleRoot, "AirDrop: address and amount not in the whitelist or wrong proof provided.");
+        require(node == merkleRoot, "AirDrop: address and amount not in the whitelist or wrong proof provided."); */
 
+
+
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, _totalAmount))));
+        require(verifyProof(_merkleProof, merkleRoot, leaf) , "AirDrop: address and amount not in the whitelist or wrong proof provided.");
+        
         // Si no se ha registrado la cantidad total asignada, la asignamos la primera vez
         if (totalAssigned[msg.sender] == 0) {
             totalAssigned[msg.sender] = _totalAmount;
@@ -55,6 +62,22 @@ contract Airdrop is Ownable, Pausable {
         // Transferir los tokens al usuario
         token.transfer(msg.sender, _amount);
         emit TokensAirdropped(msg.sender, _amount);
+    }
+
+    function verifyProof(bytes32[] memory proof, bytes32 root, bytes32 leaf) private pure returns (bool) {
+        return processProof(proof, leaf) == root;
+    }
+
+    function processProof(bytes32[] memory proof, bytes32 leaf) private pure returns (bytes32) {
+        bytes32 computedHash = leaf;
+        for (uint256 i = 0; i < proof.length; i++) {
+            computedHash = _hashPair(computedHash, proof[i]);
+        }
+        return computedHash;
+    }
+
+    function _hashPair(bytes32 a, bytes32 b) private pure returns (bytes32) {
+        return a < b ? keccak256(abi.encode(a, b)) : keccak256(abi.encode(b, a));
     }
 
     // Pausar y reanudar el contrato
