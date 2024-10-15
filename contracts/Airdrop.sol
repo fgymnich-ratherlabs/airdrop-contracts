@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./MyToken.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "hardhat/console.sol";
 
 contract Airdrop is Ownable, Pausable {
 
@@ -25,22 +26,13 @@ contract Airdrop is Ownable, Pausable {
     }
 
     // Permite redimir tokens en múltiples transacciones
-    function airdrop(bytes32[] memory _witnesses, uint256 _totalAmount, uint256 _amount, uint256 _path) public whenNotPaused {
+    function airdrop(bytes32[] memory _witnesses, uint256 _totalAmount, uint256 _amount) public whenNotPaused {
         // Validar que el contrato tiene suficientes tokens para la transacción
         require(token.balanceOf(address(this)) >= _amount, "AirDrop: MyToken contract does not have enough tokens.");
 
-        // Resolver el nodo del Merkle Tree para validar la dirección y la cantidad total asignada
-        bytes32 node = keccak256(abi.encodePacked(uint8(0x00), msg.sender, _totalAmount));
-        for (uint16 i = 0; i < _witnesses.length; i++) {
-            if ((_path & 0x01) == 1) {
-                node = keccak256(abi.encodePacked(uint8(0x01), _witnesses[i], node));
-            } else {
-                node = keccak256(abi.encodePacked(uint8(0x01), node, _witnesses[i]));
-            }
-            _path /= 2;
-        }
-        require(node == merkleRoot, "AirDrop: address and amount not in the whitelist or wrong proof provided.");
-
+        bytes32 calculatedMerkleProof = merkleVerification(_totalAmount, _witnesses);
+        require(calculatedMerkleProof == merkleRoot, "AirDrop: address and amount not in the whitelist or wrong proof provided.");
+        
         // Si no se ha registrado la cantidad total asignada, la asignamos la primera vez
         if (totalAssigned[msg.sender] == 0) {
             totalAssigned[msg.sender] = _totalAmount;
@@ -55,6 +47,20 @@ contract Airdrop is Ownable, Pausable {
         // Transferir los tokens al usuario
         token.transfer(msg.sender, _amount);
         emit TokensAirdropped(msg.sender, _amount);
+    }
+
+    function merkleVerification(uint256 _totalAmount, bytes32[] memory _witnesses ) private view returns (bytes32) {
+        // Resolver el nodo del Merkle Tree para validar la dirección y la cantidad total asignada
+        bytes32 node = keccak256(abi.encodePacked(uint8(0x00), msg.sender, _totalAmount));
+        for (uint16 i = 0; i < _witnesses.length; i++) {
+            if (node < _witnesses[i]) {
+                node = keccak256(abi.encodePacked(uint8(0x01), node, _witnesses[i]));
+            } else {
+                node = keccak256(abi.encodePacked(uint8(0x01), _witnesses[i], node));
+            }
+        }
+
+        return node;
     }
 
     // Pausar y reanudar el contrato
